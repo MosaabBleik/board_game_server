@@ -32,10 +32,10 @@ func (r *Room) InformJoin(msg *Message) {
 	if err != nil {
 		fmt.Println("Couldn't parse the message")
 	}
-	r.Broadcast([]byte(data), msg.Sender)
+	r.Broadcast([]byte(data))
 }
 
-func (r *Room) Broadcast(b []byte, sender string) {
+func (r *Room) Broadcast(b []byte) {
 	for c := range r.Clients {
 		go SendMessage(c, b)
 	}
@@ -59,12 +59,12 @@ func welcomeMessage(ws *websocket.Conn) {
 	ws.Write([]byte("welcome in the club"))
 }
 
-func EncodeMessage(data []byte) *Message {
+func EncodeMessage(data []byte) (*Message, error) {
 	msg := &Message{}
 	if err := json.Unmarshal(data, msg); err != nil {
-		return nil
+		return nil, err
 	}
-	return msg
+	return msg, nil
 }
 
 func (r *Room) RegisterClient(c *Client) error {

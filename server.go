@@ -47,10 +47,14 @@ loop:
 	for {
 		n, err := ws.Read(buf)
 		if err == io.EOF {
+			fmt.Println("DIDN't REGISTER")
 			break
 		}
-		msg = EncodeMessage(buf[:n])
-
+		msg, err = EncodeMessage(buf[:n])
+		if err != nil {
+			fmt.Println("Wrong message format")
+		}
+		fmt.Println("====================================================")
 		switch msg.Action {
 		case registerOption:
 			fmt.Println("Registered!!!")
@@ -100,11 +104,14 @@ loop:
 			continue
 		}
 
-		msg := EncodeMessage(buf[:n])
+		msg, err := EncodeMessage(buf[:n])
+		if err != nil {
+			fmt.Println("Wrong message format 222")
+		}
 
 		switch msg.Action {
 		case registerOption:
-			r.Broadcast([]byte(buf[:n]), msg.Sender)
+			r.Broadcast([]byte(buf[:n]))
 
 		case unregisterOption:
 			if err := r.UnregisterClient(msg, ws, s); err != nil {
@@ -112,13 +119,15 @@ loop:
 				//ws.Write([]byte(fmt.Sprintf(`{"action": "unregister", "sender": "%s", "body": %s}`, msg.Sender, err.Error())))
 			} else {
 				fmt.Printf("Number of clients: %d\n", len(r.Clients))
-				r.Broadcast([]byte(buf[:n]), msg.Sender)
+				r.Broadcast([]byte(buf[:n]))
 				break loop
 			}
 
 		case moveOption:
 			fmt.Println(string(buf[:n]))
 			r.BroadcastMove([]byte(buf[:n]), msg.Sender)
+		case messageOption:
+			r.Broadcast([]byte(buf[:n]))
 		}
 	}
 }
